@@ -11,44 +11,22 @@ This topic contains release notes for Scheduler v1.4.0.
 
 **Release Date:** October 30, 2020
 
-- **[Security Fix]** Updated dependencies mitigate multiple CVEs
-- **[Security Fix]** Secrets such as the admin password are scrubbed from the errands
-- **[Feature]** CLI now enables specifying a memory and disk limits for jobs so
-large jobs can successfully run
-- **[Bug Fix]** Increase java scheduler app memory from 1&nbsp;GB to 2&nbsp;GB to address
-problems of large foundation's scheduler failing to start
-- **[Bug Fix]** Scheduler CLI Plugin now returns data beyond the first page
-- **[Bug Fix]** Scheduler no longer incorrectly logs errors caused by jobs that
-have been deleted
+- **[Security Fix]** Updated dependencies to mitigate CVE
+- **[Bug Fix]** Scheduling actions now take place in transactions.
+- **[Bug Fix]** Improved error handling when deleting service instances
 
+## <a id="database-transactions"></a> Database Transactions in Scheduler v1.4.0
 
-## <a id="breaking-changes"></a> Breaking Changes in Scheduler v1.4.0
+Scheduler v1.4.0 includes a significant change to its operation: database
+transactions. Scheduler's database has several interdependent tables; in
+previous releases, it was possible under certain circumstances for records in
+those tables to go out of sync. This could result in jobs that did not run and
+could not be deleted.  Now, with database transactions enabled, the tables will
+stay in sync.
 
-Scheduler v1.4.0 includes the following breaking change:
-
-### <a id='internal-property'></a> Internal database_source.external.url Property is Secret
-
-Users of the `pivotal-cf/om` GitHub repository or Platform Automation will
-see an error message similar to the following:
-
-```json
-{"errors":{".properties.database_source.external.url":["cannot assign
-'mysql://user:password@example.com:3306' type String, expected Object"]}}
-```
-
-To fix the issue, update your product configuration by running:
-
-```diff
- product-name: p-scheduler
- product-properties:
-   .properties.database_source:
-     selected_option: external
-     value: external
-   .properties.database_source.external.url:
--    value: mysql://user:password@example.com:3306
-+    value:
-+      secret: mysql://user:password@example.com:3306
-```
+An implication of this change is that the scheduler may have a delay of up to 5 seconds
+before executing a job or call. This is because the creation of the scheduled job
+occurs within a transaction that is not yet visible to the scheduling thread.
 
 ## <a id="view"></a> View Release Notes for Another Version
 
